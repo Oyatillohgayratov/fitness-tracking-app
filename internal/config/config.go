@@ -11,6 +11,9 @@ type Config struct {
 		Database string
 		SSLMode  string
 	}
+	Server struct {
+        Port string
+    }
 }
 
 func (c Config) LoadConfig() string {
