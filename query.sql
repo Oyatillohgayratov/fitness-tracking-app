@@ -2,7 +2,7 @@
 select * from users
 where id = $1 limit 1;
 
--- name: LimitUser :many
+-- name: ListUser :many
 select id, username, email, profile
 from users
 order by username;

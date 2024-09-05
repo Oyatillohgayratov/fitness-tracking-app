@@ -63,28 +63,28 @@ func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	return i, err
 }
 
-const limitUser = `-- name: LimitUser :many
+const listUser = `-- name: ListUser :many
 select id, username, email, profile
 from users
 order by username
 `
 
-type LimitUserRow struct {
+type ListUserRow struct {
 	ID       int32
 	Username sql.NullString
 	Email    sql.NullString
 	Profile  pqtype.NullRawMessage
 }
 
-func (q *Queries) LimitUser(ctx context.Context) ([]LimitUserRow, error) {
-	rows, err := q.db.QueryContext(ctx, limitUser)
+func (q *Queries) ListUser(ctx context.Context) ([]ListUserRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUser)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []LimitUserRow
+	var items []ListUserRow
 	for rows.Next() {
-		var i LimitUserRow
+		var i ListUserRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
