@@ -1,8 +1,8 @@
-vesion: "2"
+version: "2"
 sql:
   - engine: "postgresql"
-    queries: "query.sql"
     schema: "schema.sql"
+    queries: "query.sql"
     gen:
       go:
         package: "storage"
