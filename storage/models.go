@@ -6,6 +6,7 @@ package storage
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -20,6 +21,13 @@ type Image struct {
 	ID     int32
 	UserID sql.NullInt32
 	Url    sql.NullString
+}
+
+type PasswordResetToken struct {
+	ID         int32
+	UserID     int32
+	Token      string
+	Expiration time.Time
 }
 
 type Set struct {

@@ -7,6 +7,7 @@ package storage
 
 import (
 	"context"
+	"time"
 
 	"github.com/sqlc-dev/pqtype"
 )
@@ -52,6 +53,23 @@ func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 	return err
 }
 
+const getPasswordResetToken = `-- name: GetPasswordResetToken :one
+select id, user_id, token, expiration from password_reset_tokens
+where token = $1 limit 1
+`
+
+func (q *Queries) GetPasswordResetToken(ctx context.Context, token string) (PasswordResetToken, error) {
+	row := q.db.QueryRowContext(ctx, getPasswordResetToken, token)
+	var i PasswordResetToken
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Token,
+		&i.Expiration,
+	)
+	return i, err
+}
+
 const getUser = `-- name: GetUser :one
 select id, username, email, password_hash, profile from users
 where id = $1 limit 1
@@ -59,6 +77,24 @@ where id = $1 limit 1
 
 func (q *Queries) GetUser(ctx context.Context, id int32) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Profile,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+select id, username, email, password_hash, profile from users
+where email = $1 limit 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -109,6 +145,38 @@ func (q *Queries) ListUser(ctx context.Context) ([]ListUserRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const savePasswordResetToken = `-- name: SavePasswordResetToken :exec
+insert into password_reset_tokens (user_id, token, expiration)
+values ($1, $2, $3)
+`
+
+type SavePasswordResetTokenParams struct {
+	UserID     int32
+	Token      string
+	Expiration time.Time
+}
+
+func (q *Queries) SavePasswordResetToken(ctx context.Context, arg SavePasswordResetTokenParams) error {
+	_, err := q.db.ExecContext(ctx, savePasswordResetToken, arg.UserID, arg.Token, arg.Expiration)
+	return err
+}
+
+const updatePassword = `-- name: UpdatePassword :exec
+update users
+set password_hash = $2
+where id = $1
+`
+
+type UpdatePasswordParams struct {
+	ID           int32
+	PasswordHash string
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updatePassword, arg.ID, arg.PasswordHash)
+	return err
 }
 
 const updateUser = `-- name: UpdateUser :exec

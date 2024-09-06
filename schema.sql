@@ -6,6 +6,13 @@ CREATE TABLE IF NOT EXISTS "users" (
   "profile" jsonb DEFAULT '{}'
 );
 
+CREATE TABLE "password_reset_tokens" (
+    "id" SERIAL PRIMARY KEY,
+    "user_id" INT REFERENCES users(id) ON DELETE CASCADE,
+    "token" TEXT NOT NULL,
+    "expiration" TIMESTAMP NOT NULL
+);
+
 CREATE TABLE "workouts" (
   "id" serial PRIMARY KEY,
   "user_id" int,
