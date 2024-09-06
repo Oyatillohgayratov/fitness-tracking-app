@@ -1,8 +1,15 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Config struct {
+	App struct {
+		Name        string
+		Environment string
+	}
+
 	Postgres struct {
 		Host     string
 		Port     string
@@ -12,8 +19,11 @@ type Config struct {
 		SSLMode  string
 	}
 	Server struct {
-        Port string
-    }
+		Http struct {
+			Host string
+			Port string
+		}
+	}
 }
 
 func (c Config) LoadConfig() string {
@@ -25,4 +35,8 @@ func (c Config) LoadConfig() string {
 		c.Postgres.Database,
 		c.Postgres.SSLMode,
 	)
+}
+
+func (c Config) GetHostPrort() string {
+	return fmt.Sprintf("%s:%s", c.Server.Http.Host, c.Server.Http.Port)
 }

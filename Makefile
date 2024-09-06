@@ -13,3 +13,6 @@ migrate-down:
 
 migrate-force:
 	migrate -path migrations/ -database  $(DB_URL) force 1
+
+sqlc-generate:
+	@sqlc vet && sqlc generate

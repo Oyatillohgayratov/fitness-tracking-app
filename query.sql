@@ -7,7 +7,7 @@ select id, username, email, profile
 from users
 order by username;
 
--- name: CreateUser :exec
+-- name: CreateUser :one
 insert into users (username, password_hash, email, profile)
 values ($1, $2, $3, $4)
 returning *;

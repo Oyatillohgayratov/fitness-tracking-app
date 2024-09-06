@@ -7,32 +7,39 @@ package storage
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/sqlc-dev/pqtype"
 )
 
-const createUser = `-- name: CreateUser :exec
+const createUser = `-- name: CreateUser :one
 insert into users (username, password_hash, email, profile)
 values ($1, $2, $3, $4)
 returning id, username, email, password_hash, profile
 `
 
 type CreateUserParams struct {
-	Username     sql.NullString
-	PasswordHash sql.NullString
-	Email        sql.NullString
+	Username     string
+	PasswordHash string
+	Email        string
 	Profile      pqtype.NullRawMessage
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.Username,
 		arg.PasswordHash,
 		arg.Email,
 		arg.Profile,
 	)
-	return err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Profile,
+	)
+	return i, err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
@@ -71,8 +78,8 @@ order by username
 
 type ListUserRow struct {
 	ID       int32
-	Username sql.NullString
-	Email    sql.NullString
+	Username string
+	Email    string
 	Profile  pqtype.NullRawMessage
 }
 
@@ -112,8 +119,8 @@ where id = $1
 
 type UpdateUserParams struct {
 	ID       int32
-	Username sql.NullString
-	Email    sql.NullString
+	Username string
+	Email    string
 	Profile  pqtype.NullRawMessage
 }
 

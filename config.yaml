@@ -1,3 +1,6 @@
+app:
+  name: fitness_tracking_app
+  env: dev
 postgres:
   host: "localhost"
   port: "5432"
@@ -5,4 +8,6 @@ postgres:
   password: "azamat"
   database: "fitness"
 server:
-  port: "8080"
+  http:
+    host: "localhost"
+    port: "8080"

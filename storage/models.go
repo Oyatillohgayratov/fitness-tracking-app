@@ -31,9 +31,9 @@ type Set struct {
 
 type User struct {
 	ID           int32
-	Username     sql.NullString
-	Email        sql.NullString
-	PasswordHash sql.NullString
+	Username     string
+	Email        string
+	PasswordHash string
 	Profile      pqtype.NullRawMessage
 }
 
