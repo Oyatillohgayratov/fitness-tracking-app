@@ -7,6 +7,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/sqlc-dev/pqtype"
@@ -43,6 +44,39 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const createWorkout = `-- name: CreateWorkout :one
+insert into workouts (user_id, name, description,date)
+values ($1, $2, $3, $4)
+returning id, user_id, name , description, date, create_at, update_at
+`
+
+type CreateWorkoutParams struct {
+	UserID      int32
+	Name        string
+	Description sql.NullString
+	Date        time.Time
+}
+
+func (q *Queries) CreateWorkout(ctx context.Context, arg CreateWorkoutParams) (Workout, error) {
+	row := q.db.QueryRowContext(ctx, createWorkout,
+		arg.UserID,
+		arg.Name,
+		arg.Description,
+		arg.Date,
+	)
+	var i Workout
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Description,
+		&i.Date,
+		&i.CreateAt,
+		&i.UpdateAt,
+	)
+	return i, err
+}
+
 const deleteUser = `-- name: DeleteUser :exec
 delete from users
 where id = $1
@@ -50,6 +84,21 @@ where id = $1
 
 func (q *Queries) DeleteUser(ctx context.Context, id int32) error {
 	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	return err
+}
+
+const deleteWorkout = `-- name: DeleteWorkout :exec
+delete from workouts
+where id = $1 and user_id = $2
+`
+
+type DeleteWorkoutParams struct {
+	ID     int32
+	UserID int32
+}
+
+func (q *Queries) DeleteWorkout(ctx context.Context, arg DeleteWorkoutParams) error {
+	_, err := q.db.ExecContext(ctx, deleteWorkout, arg.ID, arg.UserID)
 	return err
 }
 
@@ -106,6 +155,69 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
+const getWorkoutByUserID = `-- name: GetWorkoutByUserID :one
+select id, user_id, name, description, date, create_at, update_at
+from workouts
+where id = $1 and user_id = $2
+`
+
+type GetWorkoutByUserIDParams struct {
+	ID     int32
+	UserID int32
+}
+
+func (q *Queries) GetWorkoutByUserID(ctx context.Context, arg GetWorkoutByUserIDParams) (Workout, error) {
+	row := q.db.QueryRowContext(ctx, getWorkoutByUserID, arg.ID, arg.UserID)
+	var i Workout
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.Description,
+		&i.Date,
+		&i.CreateAt,
+		&i.UpdateAt,
+	)
+	return i, err
+}
+
+const getWorkoutsByUserID = `-- name: GetWorkoutsByUserID :many
+select id, user_id, name, description, date, create_at, update_at
+from workouts
+where user_id = $1
+`
+
+func (q *Queries) GetWorkoutsByUserID(ctx context.Context, userID int32) ([]Workout, error) {
+	rows, err := q.db.QueryContext(ctx, getWorkoutsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Workout
+	for rows.Next() {
+		var i Workout
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.Description,
+			&i.Date,
+			&i.CreateAt,
+			&i.UpdateAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUser = `-- name: ListUser :many
 select id, username, email, profile
 from users
@@ -153,7 +265,7 @@ values ($1, $2, $3)
 `
 
 type SavePasswordResetTokenParams struct {
-	UserID     int32
+	UserID     sql.NullInt32
 	Token      string
 	Expiration time.Time
 }
@@ -198,6 +310,31 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Username,
 		arg.Email,
 		arg.Profile,
+	)
+	return err
+}
+
+const updateWorkout = `-- name: UpdateWorkout :exec
+update workouts
+set name = $3, description = $4, date = $5, update_at = now()
+where id = $1 and user_id = $2
+`
+
+type UpdateWorkoutParams struct {
+	ID          int32
+	UserID      int32
+	Name        string
+	Description sql.NullString
+	Date        time.Time
+}
+
+func (q *Queries) UpdateWorkout(ctx context.Context, arg UpdateWorkoutParams) error {
+	_, err := q.db.ExecContext(ctx, updateWorkout,
+		arg.ID,
+		arg.UserID,
+		arg.Name,
+		arg.Description,
+		arg.Date,
 	)
 	return err
 }

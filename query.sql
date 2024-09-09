@@ -37,3 +37,28 @@ where token = $1 limit 1;
 update users
 set password_hash = $2
 where id = $1;
+
+
+-- name: CreateWorkout :one
+insert into workouts (user_id, name, description,date)
+values ($1, $2, $3, $4)
+returning id, user_id, name , description, date, create_at, update_at;
+
+-- name: GetWorkoutsByUserID :many
+select id, user_id, name, description, date, create_at, update_at
+from workouts
+where user_id = $1;
+
+-- name: GetWorkoutByUserID :one
+select id, user_id, name, description, date, create_at, update_at
+from workouts
+where id = $1 and user_id = $2;
+
+-- name: UpdateWorkout :exec
+update workouts
+set name = $3, description = $4, date = $5, update_at = now()
+where id = $1 and user_id = $2;
+
+-- name: DeleteWorkout :exec
+delete from workouts
+where id = $1 and user_id = $2;

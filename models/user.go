@@ -1,4 +1,4 @@
-package router
+package models
 
 type UserRegisterRequest struct {
 	Username string `json:"username"`
